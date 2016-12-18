@@ -13,7 +13,9 @@
       <div ng-repeat="results in people">
         <p>Track: {{results.trackName}}</p>
         <p>Artist: {{results.artistName}}</p>
-        <img src="{{results.artworkUrl100}}">
+        <img ng-src="{{results.artworkUrl100}}" style="width: 200px; height: 200px">
+        <button onclick='searchYoutube("{{results.trackName}}" ,"{{results.artistName}}")' >Download</button>
+        <p>Time: {{results.trackTimeMillis}}</p>
         <br>
       </div>
         <input type="button" id="search" value="update" ng-click="updateName(people);" style="display: none">
@@ -22,12 +24,47 @@
 </div>
         
 <script>
+ // https://www.googleapis.com/youtube/v3/search?key=AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI&q=rihanna%20stay&part=snippet,id
+ // https://www.googleapis.com/youtube/v3/videos?id=JF8BRvqGCNs&key=AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI&part=snippet,contentDetails,statistics,status
+function searchYoutube(title, artist)
+{
+    var video = [];
+    var id = [];
+    var i;
+    console.log("Title: " + title + " - Artist: " + artist);
+    
+        $.ajax({
+                url:"https://www.googleapis.com/youtube/v3/search",
+                data:{key:"AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI",q:artist + title,part:"snippet,id"},
+                type:"GET",
+                dataType: "jsonp",
+                success: function(data, dataType)
+                {
+                    console.log(data.items);
+                    
+                    // console.log(data.items[0].snippet.title);
+                        
+                    for(i = 0; i < 3; i++)
+                    {
+                        video[i] = data.items[i].snippet.title;
+                        id[i] = data.items[i].id.videoId;
+                    }
+                    
+                    for(i = 0; i < 3; i++)
+                    {
+                        console.log(video[i] + " - ID: "+ id[i]);    
+                    }
+                }
+ 
+        })
+    
+}
 
 $('#up').click(function(){
     $("#search").click();
         setTimeout(function(){ 
             $("#search").click();
-        }, 500);
+        }, 700);
 });
     
 $( document ).ready(function() {
@@ -52,7 +89,7 @@ function PeopleCtrl($scope, $http) {
 
         $.ajax({
                 url:"http://itunes.apple.com/search",
-                data:{term:"blue foundation eyes on fire",entity:"song",limit:"5"},
+                data:{term:"blue foundation eyes on fire",entity:"song",limit:"10"},
                 type:"GET",
                 dataType: "jsonp",
                 success: function(data, dataType)
@@ -75,7 +112,7 @@ $scope.updateName = function(people)
 {   
         $.ajax({
                 url:"http://itunes.apple.com/search",
-                data:{term:$('#songName').val(),entity:"song",limit:"5"},
+                data:{term:$('#songName').val(),entity:"song",limit:"10"},
                 type:"GET",
                 dataType: "jsonp",
                 success: function(data, dataType)
@@ -89,20 +126,37 @@ $scope.updateName = function(people)
     {
         var count = data.resultCount;
         data = data.results;
+        console.log(data);
         
         for (var i = 0; i < count; i++)
             {
                 people[i].trackName = data[i].trackName;
                 people[i].artistName = data[i].artistName;
+                people[i].artworkUrl100 = data[i].artworkUrl100;
+                people[i].trackTimeMillis = data[i].trackTimeMillis;
+                people[i].artworkUrl100 = people[i].artworkUrl100.replace(/100/g, '400');
+                people[i].trackTimeMillis = convertTime(people[i].trackTimeMillis);
             }
         
     }
 
 }
 
+function convertTime(millis) {
+  var minutes = Math.floor(millis / 60000);
+  var seconds = ((millis % 60000) / 1000).toFixed(0);
+  return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
+
 
 // End
 }    
+// http://codepen.io/aurer/pen/hnDgC
+// http://thomaspark.co/project/expandingalbums/#
+// http://codepen.io/LeonimuZ/pen/amlLs
+// http://codepen.io/alexerlandsson/pen/JoQaQO
+// Itunes Slider http://codepen.io/D_Slike/pen/QGyvQJ
+// Get top tracks https://itunes.apple.com/us/rss/topsongs/limit=15/genre=pop/explicit=true/json
 </script>
 
 </html>
