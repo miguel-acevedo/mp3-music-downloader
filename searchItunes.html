@@ -30,51 +30,102 @@ function searchYoutube(title, artist)
 {
     var video = [];
     var id = [];
+    var time = [];
     var i;
     console.log("Title: " + title + " - Artist: " + artist);
     
         $.ajax({
                 url:"https://www.googleapis.com/youtube/v3/search",
-                data:{key:"AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI",q:artist + title,part:"snippet,id"},
+                data:{key:"AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI",q:artist + title,part:"snippet,id",type:"video"},
                 type:"GET",
                 dataType: "jsonp",
                 success: function(data, dataType)
                 {
                     console.log(data.items);
                     
-                    // console.log(data.items[0].snippet.title);
+                    var count = 4;
                         
-                    for(i = 0; i < 3; i++)
+                    for(i = 0; i < count; i++)
                     {
-                        video[i] = data.items[i].snippet.title;
-                        id[i] = data.items[i].id.videoId;
+                            video[i] = data.items[i].snippet.title;
+                            id[i] = data.items[i].id.videoId;
+
+                            getTime(id[i], i, count);
                     }
                     
-                    for(i = 0; i < 3; i++)
-                    {
-                        console.log(video[i] + " - ID: "+ id[i]);    
-                    }
                 }
  
         })
     
+    function getTime(id, i, count)
+    {
+        var duration;
+
+        $.ajax({                    
+           url:"https://www.googleapis.com/youtube/v3/videos",
+           data:{key:"AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI",id:id,part:"snippet,contentDetails,statistics,status"},
+           type:"GET",
+           dataType: "jsonp",
+           success: function(data, dataType)
+           {
+               duration = data.items[0].contentDetails.duration;
+               saveTime(duration, i, count);
+           }
+
+        })   
+
+    }
+    
+    function saveTime(duration, i, count)
+    {
+        //console.log(video[i] + " - ID: "+ id[i] + " Time: " + duration);
+        time[i] = duration;
+        
+        if (i == count - 1) showTime(count);
+    }
+    
+    function showTime(count)
+    {   
+        var i;
+        for (i = 0; i < count; i++)
+        {
+            if (typeof(time[i]) == 'undefined')
+            {
+                $.getJSON('https://www.googleapis.com/youtube/v3/videos?id='+ id[i] +'&key=AIzaSyDDBk8tAkod1VRRNyFZF09fgQyMpnSe5HI&part=snippet,contentDetails,statistics,status', function(data) {
+                    time[i] = data.items[0].contentDetails.duration;
+                    
+                });
+                
+            }
+        }
+        
+        setTimeout(function(){  displayTime(count);  }, 500);
+    }
+    
+    function displayTime(count)
+    {
+        for(var i = 0; i < count; i++)
+        {
+            console.log(video[i] + " - ID: "+ id[i] + " Time: " + time[i]);
+        }
+    }
+        
 }
 
 $('#up').click(function(){
     $("#search").click();
         setTimeout(function(){ 
             $("#search").click();
-        }, 700);
+        }, 1000);
 });
     
 $( document ).ready(function() {
        setTimeout(function(){ 
             $("#clickNow").click();
-        }, 1000);
+        }, 1500);
 });    
 
 </script>
-
 
 <script>
 //https://itunes.apple.com/WebObjects/MZStore.woa/wpa/MRSS/featuredalbums/sf=143441/limit=10/rss.xml
@@ -157,6 +208,8 @@ function convertTime(millis) {
 // http://codepen.io/alexerlandsson/pen/JoQaQO
 // Itunes Slider http://codepen.io/D_Slike/pen/QGyvQJ
 // Get top tracks https://itunes.apple.com/us/rss/topsongs/limit=15/genre=pop/explicit=true/json
+// player http://codepen.io/benkadev/pen/tradf
+// Alternative itunes search http://codepen.io/shshaw/pen/XddjdR
 </script>
 
 </html>
